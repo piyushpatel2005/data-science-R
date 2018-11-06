@@ -31,4 +31,4 @@ library("devtools")
 find_rtools() # should return true if Rtools installed properly.
 ```
 
-[R Programming](rprogramming/rprogramming.md)
+[R Programming](R-programming/README.md)
