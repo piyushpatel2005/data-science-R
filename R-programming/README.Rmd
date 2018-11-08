@@ -2,7 +2,7 @@
 
 In R language, `<-` is used for assignment and the variable is called the symbol. 
 
-```{r}
+```r
 getwd() # get the working directory
 ls() # list the created objects
 a <- 1	# assign a to the value of 1
@@ -40,7 +40,7 @@ Inf
 Variable names have to start with letter and can't contain spaces
 Use underscores for variable names.
 
-```{r}
+```r
 n <- 1000
 x <- seq(1,n) # create sequence from 1 to 1000
 sum(x) # sum of sequence
@@ -48,7 +48,7 @@ sum(x) # sum of sequence
 
 All values are stored as vector. We can have numeric or character vector. Assignment is called an expression. When we press Enter, the expression is evaluated and the output is shown if any.
 
-```{r}
+```r
 x <- 1:20 # create vector of 1 to 20
 ```
 
@@ -68,7 +68,7 @@ The `c()` function can be used to create vectors of objects. We can think of `c`
 
 When objects are mixed in a vector, coercion occurs so that every element in the vector is of the same class.
 
-```{r}
+```r
 x <- c(0.5, 0.6) ## numeric
 x <- c(TRUE, FALSE) # logical
 x <- c(T, F) # logical
@@ -83,7 +83,7 @@ y <- c("a", TRUE) # character
 
 We can explicitly coerce objects using `as.*` functions. However, nonsensical coercion will result in NAs.
 
-```{r}
+```r
 x <- 0:6
 class(x)
 as.numeric(x)
@@ -100,7 +100,7 @@ Lists are a special type of vector that can contain elements of different classe
 
 Matrices are vectors with dimension attribute. Dimension is  Matrices are constructed column-wise, entries in the columns are filled first, then second column and so on. We can also create matrix by column-binding or row-binding using `cbind()` and `rbind()` functions.
 
-```{r}
+```r
 x <- list(1, "a", TRUE, 1+4i)
 m <- matrix(nrow=2, ncol=3)
 dim(m)
@@ -122,7 +122,7 @@ Factor is a special type of vector to represent categorical data. (Similar to en
 It has a special attribute called *Labels* which shows what values it can take.
 We can set the order of the levels using `levels` argument to `factor()`. This can be useful in linear modelling. By default levels are set alphanumerically based on first character.
 
-```{r}
+```r
 x <- factor(c("yes", "yes", "no", "yes", "no")) # create factor
 table(x) # represents frequency count of each label
 unclass(x) # strips out class and represents it to integer
@@ -135,7 +135,7 @@ x <- factor(c("yes", "no", "yes", "yes", "no"), levels=c("yes", "no")) # Here, y
 
 Missing values are denoted by NA or NaN. NA can also have classes. NaN value is also NA but reverse is not true.
 
-```{r}
+```r
 is.na() # test if object is NA
 is.nan() # tset for NaN
 x <- c(1,2,NA,10,3)
@@ -150,7 +150,7 @@ is.nan(x) # F F T F F
 
 This is used to store tabular data. These are represented as special type of list where each element of the list is number of rows. Data frames can store different classes of objects in each column unlike matrices. Data frames also have special attributes `row.names` for annotating data row-wise. Dataframes are usually created by `read.table()` or `read.csv()`. They can be converted from matrix using `data.matrix()`. This results in coercision.
 
-```{r}
+```R
 x <- data.frame(foo=1:4, bar: c(T, T, F, F))
 nrow(x) # 4
 ncol(x) # 2
@@ -158,7 +158,7 @@ ncol(x) # 2
 
 R objects can also have names, which are used to make readable code.
 
-```{r}
+```R
 x <- 1:3
 names(x)
 names(x) <- c("foo", "bar", "baz")
@@ -167,4 +167,191 @@ names(x)
 x <- list(a=1, b=3, c=4)
 x <- matrix(1:4, nrow=2, ncol=2)
 dimnames(m) <- list(c("a", "b"), c("c", "d")) # first row names and second is column names.
+```
+
+
+## Reading/Writing Tabular Data
+
+### Reading from files:
+
+- `read.table`, `read.csv` for reading tabular data from text files. To write `write.table`. This takes following arguments.
+	1. `file` - the name of the file or a connection
+	2. `header` - logical indicating if the file has a header line
+	3. `sep` - a string indicating how the colums are separated.
+	4. `colClasses` - a character vector indicating the class of each column in the dataset
+	5. `nrows` - number of rows in dataset
+	6. `comment.char` - a chracter string indicating the comment character
+	7. `skip` - the number of lines to skip from beginning
+	8. `stringsAsFactors` - should character variables be coded as factors? Default is `true`.
+- `readLines` for reading lines of a text file. To write `writeLines`.
+- `source` for reading R code. To write `dump`
+- `dget` for reading  R code files. To write `dput`.
+- `load` for reading saved workspaces. To write `save`.
+- `unserialize` for reading single R objects in binary form. To write `serialize`.
+When we specify all these, R can run faster. `read.csv` is similar to `read.table` except that csv are by default separated by comman and table is separated by space.
+
+```r
+data <- read.table("foo.txt")
+```
+
+For reading larger datasets, we have to check if our computer has enough memory to store that data into our RAM. For optimization, set `comment.char = ""` if there are no comments in the file. if we know column classes, it is always better to specify `colClasses` to avoid R having to check each row data type. We can find the datatype as follows.
+
+```r
+initial <- read.table("datatable.txt", nrows=100)
+classes <- sapply(initial, class)
+taball <- read.table("datatable.txt", colClasses=classes)
+```
+
+Set `nrows`. It helps with memory usage. This will find out how much memory is required. For calculation of memory. Suppose, I have a data frame with 1.5m rows and 120 columns, all numeric.
+
+= 1500000 x 120 x 8 bytes/numeric
+= 1.34 GB
+
+We will require twice as much memory.
+
+`dumping` and `dputing` are usuful because the resulting textual format is editable. `dump` and `dput` preserve the metadata. This format is not space-efficient. If something is corrupted, we can recover it.
+Another way to pass data around is deparsing the R object with `dput` and reading it back in using `dget`.
+
+```r
+y <- data.frame(a=1, b="a")
+dput(y)
+structure(list(a=1,
+				b = structure(1L, .Label="a", class="factor")),
+		.Names = c("a", "b"), row.names=c(NA, -1L),
+		class="data.frame")
+dput(y, file="Y.R")
+new.y <- dget("y.R")
+new.y
+```
+
+Multiple obejcts can be deparsed using the `dump` funciton and read back in using `source`.
+
+```r
+x <- "foo"
+y <- data.frame(a=1, b="a")
+dump(c("x", "y"), file="data.R")
+rm(x,y)
+source("data.R")
+y
+x
+```
+
+### Interfaces to outside world
+
+Data are read in using `connection` interfaces. Connections can be made to files or to other more exotic things.
+- `file` - opens a connection to a file.
+- `gzfile` - opens connection to gzip file.(gz extension)
+- `bzfile` - opens connection to bzip2 compressed file. (bz2 extension)
+- `url` - opens connection to a webpage.
+
+`file` function takes `description`, `open` to indicate open mode (r,w,a,rb,ab,wb), etc.
+
+```r
+con <- file("foo.txt", "r")
+data <- read.csv(con)
+close(con)
+
+# This is same as using read.csv function
+data <- read.csv("foo.txt")
+
+con <- gzfile("words.gz")
+x <- readLines(con, 10) # read only 10 lines
+x
+
+con <- url("http://hostname", "r")
+x <- readLines(con)
+head(x)
+```
+
+## Subsetting R objects
+
+There are operators that can be used to extract subsets of R objects.
+`[` always returns an object of the same class as the original. This can be used to select more than one element.
+`[[` is used to extract elements of a list or a data frame; it can only be used to extract a single element and the class of the returned object will not necessarily be a list or data frame.
+`$` is used to extract elements of a list or data frame by name; semantics are similar to that of `[[`.
+
+```r
+x <- c("a", "b", "c", "c", "d", "a")
+x[1] # a
+x[2] # b
+x[1:4] # a b c c 
+x[x > "a"] # b c c d
+u <- x > "a" # F T T T T F
+x[u] # b c c d
+
+x <- list (foo = 1:4, bar = 0.6)
+x[1] # $foo returns list
+x[[1]] # 1 2 3 4 returns sequence
+x$bar # 0.6
+x[["bar"]] # 0.6 same as above
+x["bar"] # $bar as list
+
+x <- list(foo=1:4, bar=0.6, baz="hello")
+x[c(1,3)] # $foo
+$baz # hello
+
+x <- list(foo=1:4, bar=0.6, baz="hello")
+name <- "foo"
+x[[name]] # 1 2 3 4
+x$name # element 'name' doesn't exist so return NULL
+x$foo # 1 2 3 4
+
+x <- list(a=list(10, 12, 14), b=c(3.14, 2.81))
+x[[c(1,3)]] # 14
+x[[1]][[3]] # 14 same as above
+x[[c(2,1)]] # 3.14
+```
+
+By default, when a single element of a matrix is retrieved, it is returned as a vector of length 1 rather than a 1x1 matrix. This behavior can be turned off by setting `drop=FALSE`.
+
+```r
+x <- matrix(1:6, 2, 3)
+x[1,2] # 3
+x[2,1] # 2
+x[1, ] # 1 3 5
+x[, 2] # 3 4
+
+x <- matrix(1:6, 2, 3)
+x[1,2]
+x(1,2,drop=FALSE)
+
+x[1,] # returns list
+x[1,,drop=FALSE] # return matrix
+```
+
+Partial matching of names is allowed with [[ and $.
+
+```r
+x <- list(aardvark=1:5)
+x$a # 1 2 3 4 5 this looks for a names that matches 'a'. This is partial matching.
+x[["a"]] # name should be exact match, so it will return NULL
+x[["a", exact=FALSE]] # 1 2 3 4 5
+```
+
+Removing NA values.
+
+```r
+x <- c(1, 2, NA, 4, NA, 5)
+bad <- is.na(x)
+x[!bad] # 1 2 4 5
+
+# multiple things you want to take subset with no missing values
+x <- c(1, 2, NA, 4, NA, 5)
+y <- c("a", "b", NA, "d", NA, "f")
+good <- complete.cases(x,y)
+good # TRUE TRUE FALSE TRUE FALSE TRUE
+x[good] # 1 2 4 5
+y[good] # "a" "b" "d" "f"
+```
+
+Vectorized operations make it easy to write code on command line. Things can happen in parallel.
+
+```r
+x <- 1:4, y <- 6:9
+x + y
+x > 2 # F F T T 
+x / y # divide each element of x by corresponding element from y
+x <- matrix(1:4, 2, 2); y <- matrix(rep(10, 4), 2, 2)
+x * y # elementwise multiplication
+x %*% y # true matrix multiplication
 ```
