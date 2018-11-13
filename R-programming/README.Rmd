@@ -1,6 +1,6 @@
 # R Basics
 
-In R language, `<-` is used for assignment and the variable is called the symbol. 
+In R language, `<-` is used for assignment and the variable is called the symbol. R uses one-based indexing and not zero-based.
 
 ```r
 getwd() # get the working directory
@@ -35,6 +35,18 @@ data() # datasets available
 CO2 # print one of the dataset
 pi
 Inf
+dir.create("testdir") # create directory
+setwd("testdir") # change working directory to testdir
+file.create("mytest.R")
+file.exists("mytest.R")
+file.info("mytest.R")
+file.info("mytest.R")$size # get size
+file.rename("mytest.R", "mytest2.R")
+file.copy("mytest2.R", "mytest3.R")
+file.remove("mytest3.R")
+file.path("mytest3.R") # get relative path of file
+file.path("folder1", "folder2") # creates platform independent filepath
+dir.create(file.path("testdir2", "testdir3"), recursive = TRUE)
 ```
 
 Variable names have to start with letter and can't contain spaces
@@ -44,6 +56,14 @@ Use underscores for variable names.
 n <- 1000
 x <- seq(1,n) # create sequence from 1 to 1000
 sum(x) # sum of sequence
+1:100 # same as seq(1,100)
+1:length(my_seq) # create sequence as long as length of my_seq
+# we can also achieve this using
+seq(along.with = my_seq)
+seq_along(my_seq)
+rep(0, times=40) # create 40 length sequence with 0 replicated (all elements 0)
+rep(c(0,1,2), times=10) # create 10 replicas of the list
+rep(c(0,1,2), each=10) # creates 10 zeros, 10 ones and 10 twos
 ```
 
 All values are stored as vector. We can have numeric or character vector. Assignment is called an expression. When we press Enter, the expression is evaluated and the output is shown if any.
@@ -61,15 +81,15 @@ R has five basic or atomic classes of objects:
 - complex
 - logical (True/False)
 The most basic object is vector and vector can contain objects of only the same class. Empty vectors can be created with `vector()` function. 
-We can have that has multiple types of objects.
+We can have that has`` multiple types of objects.
 R objects can have attributes like names, dimnames, dimensions, class, length, etc. These can be accessed using the `attributes()` function.
 
 The `c()` function can be used to create vectors of objects. We can think of `c` as concatenate.
 
-When objects are mixed in a vector, coercion occurs so that every element in the vector is of the same class.
+When objects are mixed in a vector, coercion occurs so that every element in the vector is of the same class. Atomic vectors contain only one type of data whereas a list may contain multiple data types.
 
 ```r
-x <- c(0.5, 0.6) ## numeric
+x <- c(0.5, 0.6) ## create numeric vector
 x <- c(TRUE, FALSE) # logical
 x <- c(T, F) # logical
 x <- c("a", "b", "c") # character
@@ -79,6 +99,19 @@ x <- vector("numeric", length=10) # create vector of length 10 with values 0
 y <- c(1.7, "a") # will create character vector
 y <- c(TRUE, 2) # create numeric
 y <- c("a", TRUE) # character
+
+num_vect <- c(0.5, 55, -10, 6)
+tf <- num_vect < 1 # creates logical vector based on condition
+# AND operation as &, OR operation as | and NOT opearation as !
+(3 > 5) & (4 == 4) # FALSE
+
+my_char <- c("My", "name", "is")
+paste(my_char, collapse= " ") # create a single string with all elements collapsed with space
+my_name <- c(my_char, "Piyush")
+paste(my_name, collapse=" ")
+paste("Hello", "World!", sep=" ") # join two character vectors with space
+paste(1:3, c("X", "Y", "Z"), sep="")
+paste(LETTERS, 1:4, sep="-")
 ```
 
 We can explicitly coerce objects using `as.*` functions. However, nonsensical coercion will result in NAs.
@@ -92,6 +125,26 @@ as.character(x)
 x <- c("a", "b", "c")
 as.numeric(x) # NA NA NA
 as.logical(x) # NA NA NA
+```
+
+Subsetting a vector
+
+```r
+x[1:10] # get first 10 elements from x vector
+x[is.na(x)] # returns elements with NA values.
+y <- x[!is.na(x)]
+y[y>0] # get all postive values
+x[!is.na(x) & x > 0] # combine above logic in one
+x[c(3,5,7)] # get 3rd, 5th and 7th elements
+x[c(-2,-10)] # give all the elements except 2nd and 10th (negative indexing)
+x[-c(2,10)] # same as above, only one negative sign
+vect <- c(foo=11, bar=2, norf=NA) # create named vector
+names(vect) # get only the names of a vector
+vect2 <- c(11, 2, NA) # unnamed vector
+names(vect2) <- c("foo", "bar", "norf") # add names to vector
+identical(vect, vect2) # check if both vectors are identical
+vect["bar"] # get bar element of `vect`
+vect[c("foo", "bar")] # get foo and bar from a vector
 ```
 
 ### Lists and Matrices
@@ -116,6 +169,31 @@ cbind(x,y) # column 1 will be x values, 3x2
 rbind(x,y) # row 1 will be x values, 2x3
 ```
 
+```r
+my_vector <- 1:20
+dim(my_vector) # vectors don't have dim attributes
+length(my_vector) # this works
+dim(my_vector) <- c(4,5) # set the dimension of a vector
+dim(my_vector) # check the dimension of a vector
+attributes(my_vector)
+# Now my_vector is a matrix
+class(my_vector)
+my_matrix <- my_vector
+my_matrix2 <- matrix(data=1:20, nrow=4, ncol=5) # create same matrix using matrix method
+identical(my_matrix, my_matrix2) # check if two matrix are identical
+
+# We can also assign names to columns and rows as follows
+patients <- c("Bill", "Gina", "Kelly", "Sean")
+cbind(patients, my_matrix) # add one extra column column-bind
+# R matrix can contain only one type of data, so this will result in coersion.
+# If we create data frame, it will preserve the integrity of the data.
+my_data <- data.frame(patients, my_matrix)
+class(my_data)
+cnames <- c("patient", "age", "weight", "bp", "rating", "test")
+colnames(my_data)
+colnames(my_data) <- cnames # now my_data has column names from cnames
+```
+
 ### Factors
 
 Factor is a special type of vector to represent categorical data. (Similar to enum). This can be unordered or ordered. Factors are treated specially by modelling functions like `lm()` and `glm()`. Using factors with labels is better than using integers because factors are self-describing, i.e. having a name to represent what they mean instead of values.
@@ -126,14 +204,14 @@ We can set the order of the levels using `levels` argument to `factor()`. This c
 x <- factor(c("yes", "yes", "no", "yes", "no")) # create factor
 table(x) # represents frequency count of each label
 unclass(x) # strips out class and represents it to integer
-attr(,"levels")
+attr(x,"levels")
 
 x <- factor(c("yes", "no", "yes", "yes", "no"), levels=c("yes", "no")) # Here, yes will be baseline level.
 ```
 
 ### Missing values
 
-Missing values are denoted by NA or NaN. NA can also have classes. NaN value is also NA but reverse is not true.
+Missing values are denoted by NA or NaN. NA can also have classes. NaN value is also NA but reverse is not true. Any operation involving NA generally yields NA as the result.
 
 ```r
 is.na() # test if object is NA
@@ -146,6 +224,17 @@ is.na(x) # F F T T F
 is.nan(x) # F F T F F
 ```
 
+```R
+x <- c(44, NA, 5, NA)
+x * 3
+y <- rnorm(1000) # create standard normal distribution of draw
+z <- rep(NA, 1000) # create 1000 NA values vector
+my_data <- sample(c(y,z), 100) # create sample data of 100 values from those two vectors
+my_na <- is.na(my_data)
+# Under the hood, R assigns 1 to all TRUE values and 0 to FALSE
+sum(my_na) # returns number of NA values
+Inf - Inf # results in NaN
+0 / 0 # results in NaN
 ### DataFrame
 
 This is used to store tabular data. These are represented as special type of list where each element of the list is number of rows. Data frames can store different classes of objects in each column unlike matrices. Data frames also have special attributes `row.names` for annotating data row-wise. Dataframes are usually created by `read.table()` or `read.csv()`. They can be converted from matrix using `data.matrix()`. This results in coercision.
@@ -165,7 +254,7 @@ names(x) <- c("foo", "bar", "baz")
 names(x)
 
 x <- list(a=1, b=3, c=4)
-x <- matrix(1:4, nrow=2, ncol=2)
+m <- matrix(1:4, nrow=2, ncol=2)
 dimnames(m) <- list(c("a", "b"), c("c", "d")) # first row names and second is column names.
 ```
 
@@ -224,7 +313,7 @@ new.y <- dget("y.R")
 new.y
 ```
 
-Multiple obejcts can be deparsed using the `dump` funciton and read back in using `source`.
+Multiple obejcts can be deparsed using the `dump` function and read back in using `source`.
 
 ```r
 x <- "foo"
@@ -355,3 +444,15 @@ x <- matrix(1:4, 2, 2); y <- matrix(rep(10, 4), 2, 2)
 x * y # elementwise multiplication
 x %*% y # true matrix multiplication
 ```
+
+Learn R programming interactively
+
+```R
+install.packages("swirl") # install swirl package
+packageVersion("swirl") # check version of the package
+library("swirl") # load the library package for swirl
+install_from_swirl("R Programming")
+swirl()
+```
+
+[Data Types](html/DataTypes.Rmd)
