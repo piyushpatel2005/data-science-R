@@ -47,6 +47,7 @@ file.remove("mytest3.R")
 file.path("mytest3.R") # get relative path of file
 file.path("folder1", "folder2") # creates platform independent filepath
 dir.create(file.path("testdir2", "testdir3"), recursive = TRUE)
+rm(list=ls())
 ```
 
 Variable names have to start with letter and can't contain spaces
@@ -80,7 +81,7 @@ R has five basic or atomic classes of objects:
 - integer
 - complex
 - logical (True/False)
-The most basic object is vector and vector can contain objects of only the same class. Empty vectors can be created with `vector()` function. 
+The most basic object is vector and vector can contain objects of only the same class. Empty vectors can be created with `vector()` function.
 We can have that has`` multiple types of objects.
 R objects can have attributes like names, dimnames, dimensions, class, length, etc. These can be accessed using the `attributes()` function.
 
@@ -363,7 +364,7 @@ There are operators that can be used to extract subsets of R objects.
 x <- c("a", "b", "c", "c", "d", "a")
 x[1] # a
 x[2] # b
-x[1:4] # a b c c 
+x[1:4] # a b c c
 x[x > "a"] # b c c d
 u <- x > "a" # F T T T T F
 x[u] # b c c d
@@ -438,11 +439,19 @@ Vectorized operations make it easy to write code on command line. Things can hap
 ```r
 x <- 1:4, y <- 6:9
 x + y
-x > 2 # F F T T 
+x > 2 # F F T T
 x / y # divide each element of x by corresponding element from y
 x <- matrix(1:4, 2, 2); y <- matrix(rep(10, 4), 2, 2)
 x * y # elementwise multiplication
 x %*% y # true matrix multiplication
+# We can access current date and time using
+t1 <- Sys.time()
+t2 <- as.POSIXlt(Sys.time())
+class(t2)
+unclass(t2)
+str(unclass(t2))
+t2$min
+difftime(Sys.time(), t1, units = 'days') # to specify the unit of difference
 ```
 
 Learn R programming interactively
@@ -456,3 +465,219 @@ swirl()
 ```
 
 [Data Types](html/DataTypes.Rmd)
+
+
+## Control Structures:
+
+& and | are used as AND and OR operator in R. `&&` is used with vector for AND operation of only first element of vector.
+
+```R
+TRUE & c(TRUE, FALSE, FALSE) # TRUE
+TRUE & c(TRUE, FALSE, FALSE) # T T T
+isTRUE(6>4) # TRUE
+xor(FALSE, TRUE) # TRUE
+which(c(TRUE, FALSE, TRUE)) # c(1,3), returns indices of vector which are TRUE
+any(c(TRUE, FALSE, FALSE)) # TRUE, to check if any element is TRUE
+all(c(FALSE, FALSE, TRUE)) # FALSE, to check if all elements are TRUE
+```
+
+These are mostly used in R scripts or R programs.
+
+```r
+if(<condition>) {
+	# statements
+} else if(<condition>){
+} else {
+	# statements
+}
+
+if (x > 3) {
+	y <- 10
+} else {
+	y <- 0
+}
+
+# This can also be written as
+y <- if (x > 3) 10 else 0
+```
+
+**For loop** take an iterator and assign it successive values from a sequence or vector.
+
+```R
+for (i in 1:10) {
+	print(x[i])
+}
+
+for (letter in x) { print (letter)}
+
+x <- c("a", "b", "c", "d")
+for (i in seq_along(x)) {
+	print(x[i])
+}
+
+x <- matrix(1:6, 2, 3)
+for(i in seq_len(nrow(x))) {
+	for(j in seq_len(ncol(x))) {
+		print(x[i,j])
+	}
+}
+```
+
+**While loop**
+
+```R
+count <- 0
+while(count < 10) {
+	print(count)
+	count <- count + 1
+}
+```
+
+**repeat** initiates infinite loop. To exit the loop, use `break`.
+
+```R
+x0 <- 1
+tol <- 1e-8
+
+repeat {
+	x1 <- computeEstimate()
+	if(abs (x1 - x0) < tol) {
+		break
+	} else {
+		x0 <- x1
+	}
+}
+```
+
+**next** to skip an iteration. (similar to continue). **return** signals that a function should exit and return a given value.
+
+```R
+for (i in 1:100) {
+	if (i <= 20) {
+		next
+	}
+	# do something
+}
+```
+
+## Functions
+
+Functions are created using `function` directive and stored as R objects.
+Functions can be passed as arguments to other functions. Functions can be nested. Return value is the last expression in the function to be evaluated.
+
+Functions have named arguments which potentially have default values.
+
+
+```R
+add2 <- function(x,y) {
+  x + y
+}
+
+above <- function(x, n = 10) {
+  use <- x > n
+  x[use]
+}
+x <- 1:20
+above(x, 12)
+
+columnmean <- function (y, removeNA=TRUE) {
+	# y will be dataframe
+	nc <- ncol(y)
+	means <- numeric(nc)
+	for (i in 1:nc) {
+		means[i] <- means(y[,i], na.rm = removeNA)
+	}
+	means
+}
+
+columnmean(airquality)
+
+mydata <- rnorm(100)
+sd(mydata)
+sd(x = mydata)
+sd (x=mydata, na.rm=FALSE)
+sd(na.rm=FALSE, x=mydata)
+sd(na.rm=FALSE, mydata)
+
+
+mad_libs <- function(...){
+  # Do your argument unpacking here!
+  args <- list(...)
+  place <- args[["place"]]
+  adjective <- args[["adjective"]]
+  noun <- args[["noun"]]
+  paste("News from", place, "today where", adjective, "students took to the streets in protest of the new", noun, "being installed on campus.")
+}
+```
+
+We can also define binary operators that work on two arguments like this.
+
+```R
+"%p%" <- function(left, right){ # Remember to add arguments!
+  paste(left, right, sep=' ')
+}
+'Hello' %p% 'stduent'
+'I' %p% 'love' %p% 'R!'
+```
+
+Arguments to functions are lazily evaluated.
+
+```R
+f <- function(a,b) {
+	a * 2
+}
+f(2) # this works without errors
+```
+
+The `...` argument is used to indicate variable number of arguments.
+
+```R
+myplot <- function(x,y, type="l", ...) {
+	plot(x,y,type=type,...)
+}
+
+#
+make.power <- function (n) {
+	pow <- function(x) {
+		x^n
+	}
+	pow
+}
+cube <- make.power(3)
+square <- make.power(2)
+
+ls(environment(cube))
+get("n", environment(cube))
+```
+
+### Dates
+
+R uses different data classes to represent dates. Date class are used for DATE and Times are represented using `POSIXct` and `POSIXlt` class. Times are number of seconds since January 1, 1970.
+In POSIXct times are represented as big integer. POSIXlt stores time as list and also stores various other information.
+
+```R
+x <- as.Date("1970-01-01")
+unclass(x) # 0
+unclass(as.Date("1970-01-02")) # 1
+x <- Sys.time()
+p <- as.POSIXlt(x)
+names(unclass(p))
+p$sec
+# strptime used to convert string to dates in different format.
+datestring <- c("January 10, 2012 10:40", "December 9, 2011 9:11")
+x <- strptime(datestring, "%B %d, %Y %H:%M")
+x
+class(x)
+x <- as.Date("2012-01-01")
+y <- strptime("9 Jan 2011 11:34:21", "%d %b %Y %H:%M:%S")
+x <- as.POSIXlt(x)
+x-y # this is possible only when both are POSIXlt
+
+x <- as.Date("2012-03-01")
+y <- as.Date("2012-02-28")
+x -y # time difference for leap year
+
+x <- as.POSIXct("2012-10-25 01:00:00")
+y <- as.POSIXct("2012-10-25 06:00:00", tz="GMT")
+y - x # Time difference based on timezone
+```
