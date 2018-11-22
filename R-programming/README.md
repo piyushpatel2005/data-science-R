@@ -223,6 +223,7 @@ is.nan(x) # F F F F F
 x <- c(1, 2, NaN, NA, 4)
 is.na(x) # F F T T F
 is.nan(x) # F F T F F
+unique(c(3,4,5,5,5,6,6)) # get unique elements only
 ```
 
 ```R
@@ -681,3 +682,301 @@ x <- as.POSIXct("2012-10-25 01:00:00")
 y <- as.POSIXct("2012-10-25 06:00:00", tz="GMT")
 y - x # Time difference based on timezone
 ```
+
+## Loop functions
+
+Loop functions usually have word `apply` in them.
+- `lapply`: loop over a list of objects and apply a function to all elements of list (similar to map)
+- `sapply`: same as `lapply` but try to simplify the results. Sometimes if we don't want results as list. For example, for single element list.
+- `apply`: Apply a function over the margins of an array
+- `tapply`: Apply a function over subsets of a vector (table apply)
+- `mapply`: Multivariate version of `lapply`
+- `split` is useful in conjunction with `lapply`.
+
+```R
+x <- list(a=1:5, b=rnorm(10))
+lapply(x, mean) # apply mean on each element
+
+x <- list(a = 1:4, b = rnorm(10), c = rnorm(20,1), d=rnorm(100, 5))
+lapply(x, mean)
+
+x <- 1:4
+lapply(x, runif) # create a sequence of 1,2,3,4 elements
+lapply(x, runif, min=0, max=10)
+
+x<- list(a = matrix(1:4, 2, 2), b=matrix(1:6, 3,2))
+lapply(x, function(elt) elt[,1])
+
+x <- list(a = 1:4, b = rnorm(10), c = rnorm(20,1), rnorm(100,5))
+# lapply on x return list when we apply mean
+sapply(x, mean) # returns vector with 4 elements.
+
+# apply function is used to evaluate a function over the margins ofan array.
+# mostly used to apply a function to the rows and columns of a matrix
+# It is not faster than writing a loop, but works in one line.
+str(apply) # margin specifies which margins to be retained.
+x <- matrix(rnorm(200), 20, 20)
+apply(x, 2, mean) # it applies mean on second dimension means on columns, 10 element vector is returned.
+apply(x, 1, sum) # applies sum function on rows, so 20 length vector is returned
+
+# There are functions rowSums, rowMeans, colSums and colMeans which are optimized version to calculate such simple functions.
+
+x <- matrix(rnorm(200), 20, 10)
+# calcuate quantile for 25 and 75 percentile on rows.
+apply(x, 1, quantile, probs = c(0.25, 0.75))
+
+a <- array(rnorm(2*2*10), c(2,2,10))
+apply(a, c(1,2), mean)
+rowMeans(a, dims = 2) # same as above
+
+# It applies a function in parallel over a set of arguments.
+list(rep(1,4), rep(2,3), rep(3,2), rep(4,1))
+mapply(rep, 1:4, 4:1) # same as above
+noise <- function(n, mean, sd) {
+	rnorm(n, mean, sd)
+}
+noise(5,1,2)
+noise(1:5, 1:5, 2)
+mapply(noise, 1:5, 1:5, 2) # 1 element with mean 1, 2 element with mean 2, etc.
+
+# tapply is used to apply a function over a subsets of a vector.
+x <- c(rnorm(10), runif(10), rnorm(10,1))
+f <- gl(3, 10) # 3 levels with each level repeated 10 Times
+tapply(x, f, mean)
+tapply(x, f, mean, simplify=FALSE)
+tapply(x, f, range)
+
+# split takes a vector or objects and splits it into groups determined by a factor or list of factors.
+# `drop` indicates whether empty factor levels should be dropped.
+x <- c(rnorm(10), runif(10), rnorm(10, 1))
+f <- gl(3,10)
+split(x, f)
+lapply(split(x,f), mean)
+
+library(datasets)
+head(airquality)
+# calculate mean for each column based on month
+s <- split(airquality, airquality$Month)
+lapply(s, function(x) colMeans(x[,c("Ozone", "Solar.R", "Wind")]))
+sapply(s, function(x) colMeans(x[,c("Ozone", "Solar.R", "Wind")]))
+sapply(s, function(x) colMeans(x[,c("Ozone", "Solar.R", "Wind")], na.rm=TRUE))
+
+# splitting data on more than over variable.
+x <- rnorm(10)
+f1 <- gl(2,5)
+f2 <- gl(5,2)
+interaction(f1,f2)
+str(split(x, list(f1,f2)))
+str(split(x, list(f1,f2), drop=TRUE)) # drop empty levels
+```
+
+### Exploring (Looking at) Data
+
+```R
+class(plants) # look at class of dataset
+dim(plants) # look at dimension of dataset, when it is data.frame
+nrow(plants)
+object.size(plants) # size in memory for dataset
+names(plants) # character vector of columns
+head(plants)
+head(plants, 10) # see 10 rows
+tail(plants, 10) # read last 10 rows
+summary(plants) # see summary distribution
+table(plants$Active_Growth_Period)
+str(plants)
+```
+
+## Debugging
+
+Three main types of indication for debugging. message, warning and error. R comes with several debugging tools.
+
+- `traceback`: prints out the function call stack after an error occurs; does nothing if no error.
+- `debug`: flags a function for "debug" mode which allows you to step through execution of a fcuntion one line at a time.
+- `browser`: suspends the execution of a function whenever it is called and puts the function in debug mode.
+- `trace`: allows to insert debugging code into a function at specific places.
+- `recover`: allows you to modify the error behvior so that you can browse the function call stack.
+
+```R
+mean(x) # throws error
+traceback()
+lm (y ~ x)
+traceback()
+debug(lm) # now all `lm` function calls go into debug mode. We enter browse mode.
+# We can press `n` to run the next line. We can check the line where error occurs.
+# we can nest inside debug mode by using debug another function.
+options(error=recover)
+read.csv("nosuchfile")
+```
+
+### Caching the results
+
+`<<-` oeprator is used to assign a value to an object in an environment that is different from the current environment.
+
+```R
+makeVector <- function(x = numeric()) {
+	m <- NULL
+	# sets numeric vector and mean m to default values
+	set <- function(y) {
+		x <<- y
+		m <<- NULL
+	}
+	# get the vector
+	get <- function() x
+	# set mean of x
+	setmean <- function(mean) m <<- mean
+	# get mean
+	getmean <- function() m
+	list(set = set, get = get, setmean = setmean, getmean = getmean)
+}
+
+# The following function calculates the mean of special vector created with above function.
+# However, it first checks to see if the mean has already been calculated.
+# If so, it  gets the mean from the cache and skip computation
+# otherwise it calculates the mean and sets the value of mean in cache.
+cachemean <- function(x, ...) {
+	m <- x$getmean()
+	if(!is.null(m)) {
+		message("getting cached data")
+		return (m)
+	}
+	data <- x$get()
+	m <- mean(data, ...)
+	x$setmean(m)
+	m
+}
+```
+
+`str` function is very useful to look at object. It represents the internal *structure* of the object. We can use `summary` but `str` is another option.
+
+```R
+str(str)
+str(lm)
+str(ls)
+x <- rnorm(100, 2, 4)
+summary(x)
+str(x) # gives first 5 numbers
+f <- gl(40, 10)
+str(f)
+library(datasets)
+head(airquality)
+str(airquality)
+m <- matrix(rnorm(100), 10, 10)
+str(m)
+s <- split(airquality, airquality(airquality$Month))
+```
+
+### Simulation
+
+Functions for probability distributions in R
+- `rnorm`: generate random Normal variates with a given mean and standard deviation.
+- `dnorm`: evaluate the normal probability density (with a given mean/SD) at a point(or vector of points)
+- `prnorm`: evaluate the cumulative distribution function for a normal distribution.
+- `rpois`: generate random Poisson variates with a given rate.
+
+Probability distribution functions usually have four functions associated with them. These functions are prefixed with a:
+- `d` for density
+- `r` for random number generation
+- `p` for cumulative distribution
+- `q` for quantile function.
+
+Every distribution has these four types of functions.
+
+```R
+x <- rnorm(10)
+x <- rnorm(10, mean=20, sd=2)
+summary(x)
+
+set.seed(1)
+rnorm(5)
+rnorm(5)
+set.seed(1) # set seed again to 1
+rnorm(5) # will reproduce the random numbers
+
+rpois(10, 1)
+rpois(10, 2)
+rpois(10, 20)
+
+ppois(2,2)
+ppois(4,2)
+ppois(6,2)
+```
+
+Generating Random numbers from a linear model
+
+```R
+set.seed(20)
+x <- rnorm(100)
+e <- rnorm(100, 0, 2)
+y <- 0.5 + x * x + e
+summary(y)
+```
+
+Simulate from a Poisson model
+
+```R
+set.seed(1)
+x <- rnorm(100)
+log.mu <- 0.5 + 0.3 * x
+y <- rpois(100, exp(log.mu))
+summary(y)
+plot(x, y)
+```
+
+Random sampling
+
+`sample` function draws randomly from a specified set of (scalar) objects allowing you to sample from arbitrary distributions.
+
+```R
+set.seed(1)
+sample(1:10, 4)
+sample(1:10, 4)
+sample(letters, 5)
+sample(1:10) # permutation
+sample(1:10, replace=TRUE) # sample with replacement
+```
+
+## R Profiler Tool
+
+When doing big data analysis, it is important. Profiler helps us fine tune our code. We can optimize our software with the help of profiler. Profiler helps us to get time duration for different parts of our code.
+
+- `system.time()` takes an abitrary R expression as input and returns the amount of time taken to evaluate the expression in seconds.
+
+```R
+system.time(readLines("http://www.jhsph.edu"))
+# user time will be less than elapsed time
+
+hilbert <- function(n) {
+	i <- 1:n
+	1 / outer(i - 1, i, "+")
+}
+x <- hilbert(1000)
+system.time(svd(x))
+# user time is more than elapsed. Here it uses multi-core cpu.
+
+# time longer expressions
+system.time({
+	n <- 1000
+	r <- numeric(n)
+	for (i in 1:n) {
+		x <- rnorm(n)
+		r[i] <- mean(x)
+	}
+})
+```
+
+Rprofiler is function in R. `Rprof()` and `summaryRprof()` are used to get profiles. We should not use `system.time()` with profiler functions. It keeps track of the function call stack at regularly sampled intervals and tabulates how much time is spent in each function. The `summaryRprof` function tabulates the R profiler output and calculates how much time is spent in which function. There are two methods for normalizing the data. `by.total` divides the time spent in each function by the total runtime. `by.self` does the same but first subtracts out time spent in functions above in the call stack. This is more accurate picture of the time spent by each function.
+
+```R
+summaryRprof()
+$by.total
+$by.self
+$sample.interval
+$sampling.time
+```
+
+```R
+sample(1:6, 4, replace=TRUE) # sample with repetition
+sample(LETTERS) # without repetition
+flips <- sample(c(0,1), 100, replace=TRUE, prob=c(0.3, 0.7)) # flip with given probability
+sum(flips)
+rbinom(1, size=100, prob=0.7)
