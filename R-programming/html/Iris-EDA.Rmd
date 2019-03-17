@@ -1,0 +1,43 @@
+---
+title: "EDA-Iris"
+author: "Piyush Patel"
+date: "March 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Data Analysis - Iris Data Source
+
+
+```{r}
+library(datasets)
+```
+
+```{r}
+str(iris)
+```
+
+```{r}
+boxplot(iris)
+```
+
+```{r}
+iris_ver <- subset(iris, Species == "versicolor")
+iris_set <- subset(iris, Species == "setosa")
+iris_vir <- subset(iris, Species == "virginica")
+```
+
+
+```{r}
+str(iris_ver)
+```
+
+```{r}
+par(mfrow = c(1,3))
+boxplot(iris_ver[,1:4], main = "Versicolor")
+boxplot(iris_set[,1:4], main = "Setosa")
+boxplot(iris_vir[,1:4], main = "Virginica")
+```

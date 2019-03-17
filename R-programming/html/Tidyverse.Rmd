@@ -1,0 +1,75 @@
+---
+title: "Tidyverse"
+author: "Piyush Patel"
+date: "March 14, 2019"
+output: html_document
+---
+
+# Load gapminder package
+```{r install gapminder}
+install.packages("gapminder")
+install.packages("tidyverse")
+library(tidyverse)
+library(gapminder)
+```
+
+
+Check structure of the dataset
+```{r}
+str(gapminder)
+```
+
+Names of the columns
+```{r}
+names(gapminder)
+```
+
+```{r}
+levels(gapminder$continent)
+```
+
+Using pipe operator to pipe the output to next operation
+
+```{r}
+b <- gapminder %>%
+  filter(continent == "Asia")
+print(b)
+```
+
+## Find average life expectancy in different continents
+
+```{r}
+life <- gapminder %>%
+  filter(year == 2007) %>%
+  group_by(continent) %>%
+  summarise(meanlifeexpectancy = mean(lifeExp))
+life
+```
+
+```{r}
+d <- gapminder %>% 
+  mutate(gdpPercap = gdpPercap * pop) %>% 
+  filter(year == 2007) %>% 
+  arrange(desc(gdpPercap))
+d
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp)) + geom_point()
+```
+
+```{r}
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent)) + geom_point()
+```
+
+```{r}
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent, size = pop)) + geom_point()
+```
+
+```{r}
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp, color = continent, size = pop)) + geom_point() + facet_wrap(~continent)
+```
