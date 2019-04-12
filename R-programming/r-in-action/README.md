@@ -283,3 +283,7 @@ Here are some of the useful functions which can be used when working with object
 - `rm(list=ls())`: removes most objects from working environment
 - `fix(Object)`: edits an object in place
 
+[Creating Graphs](graphs.md)
+
+[Basic Data Management](data-management.md)
+
