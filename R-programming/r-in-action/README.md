@@ -287,3 +287,4 @@ Here are some of the useful functions which can be used when working with object
 
 [Basic Data Management](data-management.md)
 
+[Advanced Data Management](advanced-data-management.md)
